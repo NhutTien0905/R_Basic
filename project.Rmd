@@ -1,0 +1,193 @@
+Bài 1:
+```{r}
+# đọc dữ liệu
+hsg <- read.csv("Nguyen Thi Thanh Ngan_data_HSG.csv")
+# chuyển thành dạng Dataframe
+HSG_df <- data.frame(hsg)
+# sử dụng hàm name
+names(HSG_df)
+```
+Bài 2:
+```{r}
+# gán cột ngày vào biến mydate
+mydate <- c(HSG_df$Ngày)
+print("Ngày trước format:")
+print(mydate)
+
+print('-------------------------------------------------------------------------------------------')
+
+# chuyển ngày về dạng yyyy-mm-dd
+formatted_date <- as.Date(mydate, format = "%d/%m/%Y")
+print("Ngày sau format:")
+print(formatted_date)
+```
+Bài 3:
+```{r}
+#install.packages("zoo")
+library(zoo)
+```
+
+```{r}
+# gán giá trị đóng cửa
+closing_prices <- HSG_df$Đóng.cửa
+# tạo object zoo
+price <- zoo(closing_prices, order.by = mydate)
+# tính tỷ suất sinh lời
+return <- diff(price) / head(price, -1)
+print("Tỷ suất sinh lời theo ngày:")
+print(return)
+```
+Bài 4:
+```{r}
+#install.packages("moments")
+library(moments)
+```
+
+```{r}
+# vẽ histogram
+hist(return, 
+     main = "Phân phối tỷ suất sinh lời", 
+     xlab = "Tỷ suất sinh lời", 
+     ylab = "Số lượng",
+     col = "lightblue",
+     border = "black")
+```
+
+```{r}
+# tính kì vọng
+mean_value <- mean(return)
+cat("Kỳ vọng:", mean_value, "\n")
+# tính độ lệch chuẩn
+std_dev <- sd(return)
+cat("Độ lệch chuẩn:", std_dev, "\n")
+# tính độ đối xứng
+skewness_value <- skewness(return)
+cat("Độ đối xứng:", skewness_value, "\n")
+# tính độ nhọn
+kurtosis_value <- kurtosis(return)
+cat("Độ nhọn:", kurtosis_value, "\n")
+```
+
+Bài 5:
+```{r}
+# tính tỷ suất sinh lời đã loại bỏ cột thời gian
+corereturn <- diff(closing_prices) / head(closing_prices, -1)
+print("Tỷ suất sinh lời đã loại bỏ cột thời gian")
+print(corereturn)
+```
+
+```{r}
+# vẽ đồ thị ACF của Tỷ suất sinh lời
+acf(corereturn, main = "ACF của Tỷ suất sinh lời")
+
+squared_return <- corereturn^2
+# vẽ đồ thị ACF của Tỷ suất sinh lời bình phương
+acf(squared_return, main = "ACF của Tỷ suất sinh lời bình phương")
+```
+
+```{r}
+# Kiểm định Ljung-Box cho Tỷ suất sinh lời
+ljung_box_result1 <- Box.test(corereturn, lag = 20, type = "Ljung-Box")
+print("Kiểm định Ljung-Box cho Tỷ suất sinh lời:")
+print(ljung_box_result1)
+
+# Kiểm định Ljung-Box cho Tỷ suất sinh lời bình phương
+ljung_box_result2 <- Box.test(squared_return, lag = 20, type = "Ljung-Box")
+print("Kiểm định Ljung-Box cho Tỷ suất sinh lời bình phương:")
+print(ljung_box_result2)
+```
+
+Bài 6:
+```{r}
+# đọc dữ liệu của 2 cổ phiếu khác
+bid <- read.csv("Nguyen Thi Thanh Ngan_data_BID.csv")
+hpg <- read.csv("Nguyen Thi Thanh Ngan_data_HPG.csv")
+
+# ghép các bộ dữ liệu lại
+hsg_bid <- merge(x = hsg, y = bid, by = "Ngày")
+hsg_bid_hpg <- merge(x = hsg_bid, y = hpg, by = "Ngày")
+print(hsg_bid_hpg)
+```
+
+```{r}
+# chuyển về dạng dataframe
+hsg_bid_hpg_df <- data.frame(hsg_bid_hpg)
+
+# trích cột cần thiết
+col_names <- c('Ngày', 'Đóng.cửa.x', 'Đóng.cửa.y', 'Đóng.cửa')
+# tạo sub dataframe chứa gái trị đóng cửa
+closing_prices_df <- hsg_bid_hpg_df[col_names]
+
+print(closing_prices_df)
+```
+
+```{r}
+closing_prices_df$Ngày <- as.Date(closing_prices_df$Ngày, format = '%d/%m/%Y')
+# lấy giá trị đóng cửa HSG
+closing_prices_HSG <- closing_prices_df$Đóng.cửa.x
+price_HSG <- zoo(closing_prices_HSG, order.by = closing_prices_df$Ngày)
+# tính tỷ suất sinh lời của HSG theo ngày
+return_hsg <- diff(price_HSG) / head(price_HSG, -1)
+print("Tỷ suất sinh lời của HSG theo ngày:")
+print(return_hsg)
+
+```
+
+
+```{r}
+# lấy giá trị đóng cửa BID
+closing_prices_BID <- closing_prices_df$Đóng.cửa.y
+
+price_BID <- zoo(closing_prices_BID, order.by = closing_prices_df$Ngày)
+# tính Tỷ suất sinh lời của BID theo ngày
+return_BID <- diff(price_BID) / head(price_BID, -1)
+print("Tỷ suất sinh lời của BID theo ngày:")
+print(return_BID)
+```
+
+
+```{r}
+# lấy giá trị đóng cửa HPG
+closing_prices_HPG <- closing_prices_df$Đóng.cửa
+
+price_HPG <- zoo(closing_prices_HPG, order.by = closing_prices_df$Ngày)
+# tính Tỷ suất sinh lời của HPG theo ngày
+return_hpg <- diff(price_HPG) / head(price_HPG, -1)
+print("Tỷ suất sinh lời của HPG theo ngày:")
+print(return_hpg)
+```
+
+```{r}
+# Tính ma trận hệ số tương quan giữa 3 cổ phiếu
+col_name <- c('Đóng.cửa.x', 'Đóng.cửa.y', 'Đóng.cửa')
+
+correlation_matrix <- cor(closing_prices_df[col_name])
+
+print(correlation_matrix)
+```
+
+
+```{r}
+# Tính ma trận hệ số tương quan giữa 3 cổ phiếu từ 2020-01-20 đến 2020-03-23
+start_day = "2020-01-20"
+end_day = "2020-03-23"
+# lấy sub dataframe theo ngày
+subset_df <- closing_prices_df[closing_prices_df$Ngày >= start_day & closing_prices_df$Ngày <= end_day, ]
+print(subset_df)
+# tính ma trận hệ số tương quan
+correlation_matrix <- cor(subset_df[col_name])
+print(correlation_matrix)
+```
+```{r}
+# Tính ma trận hệ số tương quan giữa 3 cổ phiếu từ 2022-03-28 đến 2022-05-09
+start_day = "2022-03-28"
+end_day = "2022-05-09"
+# lấy sub dataframe theo ngày
+subset_df <- closing_prices_df[closing_prices_df$Ngày >= start_day & closing_prices_df$Ngày <= end_day, ]
+print(subset_df)
+# tính ma trận hệ số tương quan
+correlation_matrix <- cor(subset_df[col_name])
+print(correlation_matrix)
+```
+  
+
